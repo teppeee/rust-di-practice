@@ -1,5 +1,15 @@
+
+
 fn main() {
-    println!("Hello, world!");
+    let state = AppState{
+        connection: Con,
+    };
+
+    use_service_a(state);
+}
+
+pub fn use_service_a(svc : impl ServiceA){
+    println!("{}", svc.a_method());
 }
 
 struct Con;
@@ -74,6 +84,40 @@ impl<T: ServiceA> ExtServiceA for T {
         let b = self.get_repo_b();
         b.get_customer();
 
-        "".to_string()
+        "service_a_method_daze".to_string()
     }
 }
+
+//通常の実装　すべてAppStateに実装してやる
+impl ServiceA for AppState {}
+
+impl HaveRepositoryA for AppState {
+    type RepoA = Self;
+
+    fn get_repo_a(&self) -> &Self::RepoA {
+        &self
+    }
+}
+
+impl HaveRepositoryB for AppState {
+    type RepoB = Self;
+
+    fn get_repo_b(&self) -> &Self::RepoB {
+        &self
+    }
+}
+
+impl HaveServiceA for AppState {
+    type SvcA = Self;
+
+    fn get_service_a(&self) -> &Self::SvcA {
+        &self
+    }
+}
+
+
+//テスト
+
+
+
+//トランザクション
