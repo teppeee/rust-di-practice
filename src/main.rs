@@ -1,21 +1,17 @@
-
-
 fn main() {
-    let state = AppState{
-        connection: Con,
-    };
+    let state = AppState { connection: &Con };
 
     use_service_a(state);
 }
 
-pub fn use_service_a(svc : impl ServiceA){
+pub fn use_service_a(svc: impl ServiceA) {
     println!("{}", svc.a_method());
 }
 
 struct Con;
 
-struct AppState {
-    connection: Con,
+struct AppState<'a> {
+    connection: &'a Con,
 }
 
 // pub trait HaveCon {
@@ -34,7 +30,7 @@ pub trait ExtRepositryA {
     fn get_user(&self) -> String;
 }
 
-impl ExtRepositryA for AppState {
+impl<'a> ExtRepositryA for AppState<'a> {
     fn get_user(&self) -> String {
         //exceute query by con
         &self.connection;
@@ -47,20 +43,18 @@ pub trait HaveServiceA {
     fn get_service_a(&self) -> &Self::SvcA;
 }
 
-
 pub trait HaveRepositoryB {
     type RepoB: ExtRepositryB;
     fn get_repo_b(&self) -> &Self::RepoB;
 }
 
+pub trait RepositoryB {}
 
-pub trait RepositoryB{}
-
-pub trait ExtRepositryB{
+pub trait ExtRepositryB {
     fn get_customer(&self) -> String;
 }
 
-impl ExtRepositryB for AppState {
+impl<'a> ExtRepositryB for AppState<'a> {
     fn get_customer(&self) -> String {
         &self.connection;
         "extrepo_b".to_string()
@@ -69,9 +63,9 @@ impl ExtRepositryB for AppState {
 
 pub trait HaveRepositryB {}
 
-pub trait ServiceA : HaveRepositoryA + HaveRepositoryB {}
+pub trait ServiceA: HaveRepositoryA + HaveRepositoryB {}
 
-pub trait ExtServiceA{
+pub trait ExtServiceA {
     fn a_method(&self) -> String;
 }
 
@@ -82,7 +76,7 @@ impl<T: ServiceA> ExtServiceA for T {
         let repoa = a.get_user();
 
         let b = self.get_repo_b();
-        let repob =b.get_customer();
+        let repob = b.get_customer();
 
         let result = format!("{}:{}:service_a_method", repoa, repob);
 
@@ -91,9 +85,9 @@ impl<T: ServiceA> ExtServiceA for T {
 }
 
 //通常の実装　すべてAppStateに実装してやる
-impl ServiceA for AppState {}
+impl<'a> ServiceA for AppState<'a> {}
 
-impl HaveRepositoryA for AppState {
+impl<'a> HaveRepositoryA for AppState<'a> {
     type RepoA = Self;
 
     fn get_repo_a(&self) -> &Self::RepoA {
@@ -101,7 +95,7 @@ impl HaveRepositoryA for AppState {
     }
 }
 
-impl HaveRepositoryB for AppState {
+impl<'a> HaveRepositoryB for AppState<'a> {
     type RepoB = Self;
 
     fn get_repo_b(&self) -> &Self::RepoB {
@@ -109,7 +103,7 @@ impl HaveRepositoryB for AppState {
     }
 }
 
-impl HaveServiceA for AppState {
+impl<'a> HaveServiceA for AppState<'a> {
     type SvcA = Self;
 
     fn get_service_a(&self) -> &Self::SvcA {
@@ -117,10 +111,9 @@ impl HaveServiceA for AppState {
     }
 }
 
-
 //テスト
 //ServiceAを差し替えたい
-struct Mock{}
+struct Mock {}
 
 impl ExtServiceA for Mock {
     fn a_method(&self) -> String {
@@ -129,14 +122,13 @@ impl ExtServiceA for Mock {
 }
 
 #[test]
-fn test_use_service_a(){
-    let mock = Mock{};
-    assert_eq!("service_a_mock".to_string(), mock.a_method()) 
+fn test_use_service_a() {
+    let mock = Mock {};
+    assert_eq!("service_a_mock".to_string(), mock.a_method())
 }
 
-
 //リポジトリがまだなのでそこを差し替えでServiceAをテストしたい
-struct MockRepo{}
+struct MockRepo {}
 
 impl ExtRepositryA for MockRepo {
     fn get_user(&self) -> String {
@@ -169,8 +161,10 @@ impl HaveRepositoryB for MockRepo {
 }
 
 #[test]
-fn test_use_service_a_repo(){
-    let mock = MockRepo{};
-    assert_eq!("mock_repo_a:mock_repo_b:service_a_method".to_string(), mock.a_method()) 
+fn test_use_service_a_repo() {
+    let mock = MockRepo {};
+    assert_eq!(
+        "mock_repo_a:mock_repo_b:service_a_method".to_string(),
+        mock.a_method()
+    )
 }
-
