@@ -61,8 +61,6 @@ impl<'a> ExtRepositryB for AppState<'a> {
     }
 }
 
-pub trait HaveRepositryB {}
-
 pub trait ServiceA: HaveRepositoryA + HaveRepositoryB {}
 
 pub trait ExtServiceA {
